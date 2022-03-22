@@ -1,0 +1,35 @@
+:root {
+    --cell-length: 40px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.board {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: calc((var(--cell-length) * 9) + 1px);
+    height: calc((var(--cell-length) * 9) + 1px);
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    box-sizing: border-box;
+    border-bottom: 1px solid grey;
+    border-right: 1px solid grey;
+}
+
+.grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: calc(var(--cell-length) * 3);
+    height: calc(var(--cell-length) * 3);
+}
+
+.cell {
+    width: var(--cell-length);
+    border-top: 1px solid grey;
+    border-left: 1px solid grey;
+    text-align: center;
+    line-height: calc(var(--cell-length) - 1px);
+}
