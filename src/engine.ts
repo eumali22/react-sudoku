@@ -72,7 +72,7 @@ export function checkGrid(t: Address, n: number, board: Board): boolean {
   for (let i = 0; i < 9; i++) {
     if (i !== cellIdx) {
       if (grid[i] === n) {
-        console.log("grid: not allowed...");
+        // console.log("grid: not allowed...");
         return false;
       }
     }
@@ -102,7 +102,7 @@ export function checkRow(t: Address, n: number, board: Board): boolean {
       if (!(t[0] === rowSet0[x] && t[1] === rowSet1[y])) {
         // console.log(`checking ${rowSet0[x]},${rowSet1[y]} against ${board[rowSet0[x]][rowSet1[y]]}`);
         if (board[rowSet0[x]][rowSet1[y]] === n) {
-          console.log("row: not allowed...");
+          // console.log("row: not allowed...");
           return false;
         }
       }
@@ -133,7 +133,7 @@ export function checkColumn(t: Address, n: number, board: Board): boolean {
       if (!(t[0] === colSet0[x] && t[1] === colSet1[y])) {
         // console.log(`checking ${rowSet0[x]},${rowSet1[y]} against ${board[rowSet0[x]][rowSet1[y]]}`);
         if (board[colSet0[x]][colSet1[y]] === n) {
-          console.log("column: not allowed...");
+          // console.log("column: not allowed...");
           return false;
         }
       }
@@ -143,50 +143,48 @@ export function checkColumn(t: Address, n: number, board: Board): boolean {
   return true;
 }
 
-export async function fillBoard() {
-  let board: Board|null = generate();
-  for (let i = 1; i <= 9; i++) {
-    board = await putNumOnGrid(0, i, board!);
-    if (!board) {
-      // need to back up to the previous number. how?
-    }
-  }
+export function fillBoard(): Board | null {
+  return putNumOnGrid(0, 1, generate());
 }
 
-export async function putNumOnGrid(gIdx: number, n: number, board: Board): Promise<Board | null> {
-  if (gIdx > 8) {
+export function putNumOnGrid(gIdx: number, n: number, board: Board): Board | null {
+  if (n > 9) {
     return board;
+  }
+  if (board === null) {
+    return null;
   }
 
   const idxPerm = getPermutation(cellIndices);
-  console.log(`perm: ${idxPerm}`);
-
+  console.log(`number: ${n}, grid: ${gIdx}`);
+  
   let updatedBoard = null;
   for (let currPermIdx = 0; currPermIdx < idxPerm.length; currPermIdx++) {
     const addr: Address = [gIdx, idxPerm[currPermIdx]];
     const currNum = board[addr[0]][addr[1]];
     // console.log(`trying to place ${n} on addr ${addr}, curr val in cell is ${currNum}`);
     if (currNum === -1 && checkConstraints(addr, n, board)) {
-      console.log(`placing ${n} on good addr ${addr}...`);
+      // console.log(`placing ${n} on good addr ${addr}...`);
 
       // place value on board
       const newBoard = copyBoard(board);
       newBoard[addr[0]][addr[1]] = n;
-      PubSub.publish(BoardEvents.UPDATE_BOARD, newBoard);
 
-      await wait(500);
-
-      updatedBoard = await putNumOnGrid(gIdx + 1, n, newBoard);
+      if (gIdx === 8) {
+        updatedBoard = putNumOnGrid(0, n + 1, newBoard);
+      } else {
+        updatedBoard = putNumOnGrid(gIdx + 1, n, newBoard);
+      }
+      
       if (updatedBoard) {
-        console.log(`success @ grid idx ${gIdx} addr ${addr[0]},${addr[1]}`);
+        // console.log(`success @ grid idx ${gIdx} addr ${addr[0]},${addr[1]}`);
         break;
       } else {
-        console.log(`failed @ grid idx ${gIdx} addr ${addr[0]},${addr[1]}`);
+        // console.log(`failed @ grid idx ${gIdx} addr ${addr[0]},${addr[1]}`);
       }
     }
   }
 
-  await wait(200);
   return updatedBoard;
 }
 
