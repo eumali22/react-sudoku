@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PubSub from 'pubsub-js';
 
-const clickEvent = "click" as const;
+const clickEvent = "CLICK_BUTTON_GROUP" as const;
 
 function ButtonGroup() {
   const btns = [1, 2, 3, 4, 5].map((v) => {
@@ -17,26 +17,27 @@ function ButtonGroup() {
 
 function Button(props: {id: number}) {
   const [selected, setSelected] = useState(false);
+  const { id } = props;
 
   useEffect(() => {
-    console.log(`button ${props.id} subscribing`);
-    const token = PubSub.subscribe(clickEvent, (msg, id) => {
-      if (props.id === id) {
-        console.log(`selecting ${props.id}`);
+    console.log(`button ${id} subscribing`);
+    const token = PubSub.subscribe(clickEvent, (msg, eventSourceId) => {
+      if (id === eventSourceId) {
+        console.log(`selecting ${id}`);
         setSelected(true);
       } else {
-        console.log(`unselecting ${props.id}`);
+        console.log(`unselecting ${id}`);
         setSelected(false);
       }
     });
     return () => {
-      console.log(`button ${props.id} unsubscribing`);
+      console.log(`button ${id} unsubscribing`);
       PubSub.unsubscribe(token);
     }
-  }, [selected]); 
+  }, [id]); 
 
   return (
-    <button onClick={() => PubSub.publish(clickEvent, props.id)}>
+    <button onClick={() => PubSub.publish(clickEvent, id)}>
       {selected ? "I'm selected" : "Nah"}
     </button>
   );
