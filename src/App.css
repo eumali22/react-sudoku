@@ -38,3 +38,21 @@
     transform: rotate(360deg);
   }
 }
+
+/*****/
+
+.btns {margin-left: 10px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  width: 200px;
+}
+
+.btns button {
+  /*flex: 40px;*/
+  box-sizing: border-box;
+  font-size: small;
+  width: 80%;
+  margin: 1px;
+}
