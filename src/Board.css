@@ -1,11 +1,15 @@
 :root {
     --cell-length: 40px;
-    --border-default: 3px solid rgb(121, 121, 121);
-    --border-selected: 3px solid rgb(0, 163, 22);
+    --border-default: 2px solid rgb(156, 156, 156);
+    --border-selected: 2px solid black;
     --border-radius-default: 5px;
-    --bgc1: rgb(14, 15, 87);
-    --bgc2: rgb(21, 23, 134);
-    --text-color: rgb(206, 205, 205);
+    /* --bgc1: rgb(14, 15, 87);
+    --bgc2: rgb(21, 23, 134); */
+    --bgc1: white;
+    --text-color1: black;
+    --text-color2: rgb(29, 29, 29);
+    --highlight1: rgb(223, 223, 223);
+    --highlight2: rgb(190, 190, 190);
 }
 
 * {
@@ -16,12 +20,14 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    width: calc((var(--cell-length) * 9) + 6px);
-    height: calc((var(--cell-length) * 9) + 6px);
+    width: calc((var(--cell-length) * 9) + 4px);
+    height: calc((var(--cell-length) * 9) + 4px);
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     border: var(--border-default);
-    color: var(--text-color);
-    font-weight: bold;
+    color: var(--text-color2);
+    font-weight: normal;
+    font-family: Arial;
+    font-size: 1.4em;
     border-radius: var(--border-radius-default);
 }
 
@@ -38,17 +44,47 @@
 }
 
 .bg2 {
-    background-color: var(--bgc2);
+    background-color: var(--bgc1);
 }
 
 .cell {
   width: var(--cell-length);
+  min-height: var(--cell-length);
   border: var(--border-default);
   text-align: center;
-  line-height: calc(var(--cell-length) - 6px);
+  line-height: calc(var(--cell-length) - 4px);
   cursor: pointer;
+  border-radius: 0px;
 }
 
 .sel {
+  background-color: rgb(66, 51, 153) !important;
+  color: white !important;
   border: var(--border-selected);
+}
+
+.hlight1 {
+  color: var(--text-color1);
+  background-color: var(--highlight1);
+}
+
+.hlight2 {
+  color: var(--text-color1);
+  background-color: var(--highlight2);
+}
+
+.bdr-t {
+  border-top-color: black !important;
+}
+
+.bdr-b {
+  border-bottom-color: black !important;
+}
+
+.bdr-r {
+  border-right-color: black !important;
+}
+
+.bdr-l {
+  border-left-color: black !important;
 }
