@@ -207,7 +207,7 @@ export function fillBoard(): Board {
   // type assertion to never return null.
   // assumption: brute force algo to always find a solution :)
   let b = putNumOnGrid(0, 1, createEmptyBoard()) as Board; 
-  return pluckNumbers(40, b);
+  return pluckNumbers(3, b);
 }
 
 function putNumOnGrid(gIdx: number, n: number, board: Board): Board | null {

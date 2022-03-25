@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import "./Board.css";
-import { Address, checkWinCondition, colMap, isSameAddress, isSameColumn, isSameGrid, isSameRow, rowMap } from "./engine";
+import { Address, checkWinCondition, colMap, fillBoard, isSameAddress, isSameColumn, isSameGrid, isSameRow, rowMap } from "./engine";
 import { copyBoard, createEmptyBoard } from "./engine";
 import PubSub from 'pubsub-js';
-
 
 export const BoardEvents = {
   FILL_GRID: "grid.fill",
@@ -11,69 +10,59 @@ export const BoardEvents = {
   TYPEIN_CELL: "typein.cell",
   UPDATE_BOARD: "update.board",
   CHECK_WIN: "check.win",
+  VICTORY: "victory",
 } as const;
 
 export function Board() {
-  const [board, setBoard] = useState(() => createEmptyBoard());
-  // const [solution, setSolution] = useState(() => generate());
-  const latestBoard = useRef(board);
-
-  // Listen to check win condition request event
-  useEffect(() => {    
-    const token = PubSub.subscribe(BoardEvents.CHECK_WIN, (msg) => {
-      if (checkWinCondition(latestBoard.current)) {
-        alert("VICTORY!");
-      }
-    });
-    return () => {
-      PubSub.unsubscribe(token);
+  const [board, setBoard] = useState(() => fillBoard());
+  const [solved, setSolved] = useState(false);
+  
+  function handleKeyDown(data: { val: number, addr: Address }) {
+    const newBoard = copyBoard(board);
+    newBoard[data.addr[0]][data.addr[1]] = data.val;
+    setBoard(newBoard);
+    if (checkWinCondition(newBoard)) {
+      setSolved(true);
     }
-  }); 
+  }
+
+  useEffect(() => {
+    if (solved) setTimeout(() => alert("VICTORY!"), 200);
+  }, [solved]);
 
   // Listen to board update request event
   useEffect(() => {
     const token = PubSub.subscribe(BoardEvents.UPDATE_BOARD, (msg, newBoard) => {
       setBoard(newBoard);
-      latestBoard.current = newBoard;
     });
     return () => {
       PubSub.unsubscribe(token);
     }
   });
 
-  // Listen to keydown events
-  useEffect(() => {
-    const token = PubSub.subscribe(BoardEvents.TYPEIN_CELL, (msg, data) => {
-      // if (checkConstraints(data.addr, data.val, board)) {
-        const newBoard = copyBoard(board);
-        newBoard[data.addr[0]][data.addr[1]] = data.val;
-        setBoard(newBoard);
-        latestBoard.current = newBoard;
-      // }
-    });
-    return () => {
-      PubSub.unsubscribe(token);
-    }
-  }, [board]);
-
   return (
     <div className="board">
       {board.map((val, idx) => {
-        return <Grid key={idx} gridIdx={idx} values={val} />
+        return <Grid key={idx} gridIdx={idx} values={val} handleKeyDown={handleKeyDown} />
       })}
     </div>
   );
 }
 
-function Grid(props: {gridIdx: number, values: Array<number>}) {
+type GridProps = {
+  gridIdx: number,
+  values: Array<number>,
+  handleKeyDown: (data: { val: number, addr: Address }) => void
+}
+
+function Grid(props: GridProps) {
     const { gridIdx, values } = props;
     const comps = values.map((val, idx) => {
         return <Cell
           key={idx}
-          tidx={idx}
           addr={[gridIdx, idx]}
           val={val}
-          selected={false}
+          handleKeyDown={props.handleKeyDown}
         />
     });
     return (
@@ -84,31 +73,27 @@ function Grid(props: {gridIdx: number, values: Array<number>}) {
 type CellProps = {
   addr: Address,
   val: number,
-  selected: boolean,
-  tidx: number,
+  handleKeyDown: (data: { val: number, addr: Address }) => void
 }
 
-function Cell(props: CellProps) {
+function Cell({addr, val, handleKeyDown}: CellProps) {
   const [selected, setSelected] = useState(false);
   const [highlight1, setHighlight1] = useState(false);
   const [highlight2, setHighlight2] = useState(false);
-  const { addr, val } = props;
-  const v = val < 0 ? " " : val;
 
-  const handleKeyDown = (e: any) => {
+  const processKeyDown = (e: any) => {
     let k = parseInt(e.key);
     k = (e.keyCode === 46) ? -1 : k;
     
     if ((k >= 1 && k <= 9) || k === -1) {
       PubSub.publish(BoardEvents.TYPEIN_CELL, { val: k, addr: addr });
+      handleKeyDown({ val: k, addr: addr });
     }
   }
 
+  // highlight cell if there was an input event on a cell and it has same value as this cell
   useEffect(() => {
     const token = PubSub.subscribe(BoardEvents.TYPEIN_CELL, (msg, data) => {
-      // console.log(val);
-      // console.log(data.v);
-      
       setHighlight2(val !== -1 && val === data.val);
     });
     return () => {
@@ -116,6 +101,7 @@ function Cell(props: CellProps) {
     }
   }, [val]);
 
+  // highlight cell if there was a select event on a cell and it is related to this cell
   useEffect(() => {
     const token = PubSub.subscribe(BoardEvents.SELECT_CELL, (msg, data) => {
       setSelected(isSameAddress(addr, data.addr));
@@ -134,9 +120,9 @@ function Cell(props: CellProps) {
       onClick={() => {
         PubSub.publish(BoardEvents.SELECT_CELL, { addr: addr, val: val});
       }}
-      onKeyDown={(e) => handleKeyDown(e)}
+      onKeyDown={processKeyDown}
     >
-      {v}
+      {val === -1 ? "" : val}
     </div>
   )
 }
