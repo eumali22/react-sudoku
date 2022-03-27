@@ -1,7 +1,7 @@
 :root {
     --cell-length: 40px;
-    --border-default: 2px solid rgb(156, 156, 156);
-    --border-selected: 2px solid black;
+    --border-default: 2px solid rgb(177, 171, 154);
+    --border-selected: 2px solid rgb(44, 26, 26);
     --border-radius-default: 5px;
     /* --bgc1: rgb(14, 15, 87);
     --bgc2: rgb(21, 23, 134); */
