@@ -11,7 +11,8 @@ export const BoardEvents = {
   UPDATE_BOARD: "update.board",
   CHECK_WIN: "check.win",
   VICTORY: "victory",
-  NEW_GAME: "new.game"
+  NEW_GAME: "new.game",
+  TOGGLE_BOARD_DISPLAY: "toggle.board"
 } as const;
 
 export function Board() {
@@ -134,9 +135,10 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
   const [selected, setSelected] = useState(false);
   const [highlight1, setHighlight1] = useState(false);
   const [highlight2, setHighlight2] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   const processKeyDown = (e: any) => {
-    if (isClue) return;
+    if (isClue || hidden) return;
     let k = parseInt(e.key);
     k = (e.keyCode === 46) ? -1 : k;
     if (val === k) return;
@@ -146,6 +148,21 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
       handleKeyDown({ val: k, addr: addr });
     }
   }
+
+  // toggle shown / hidden contents.
+  useEffect(() => {
+    const token = PubSub.subscribe(BoardEvents.TOGGLE_BOARD_DISPLAY, () => {
+      setHidden(!hidden);
+      if (!hidden) { // hide event triggered
+        setSelected(false);
+        setHighlight1(false);
+        setHighlight2(false);
+      }
+    });
+    return () => {
+      PubSub.unsubscribe(token);
+    }
+  }, [hidden]);
 
   // highlight cell if there was an input event on a cell and it has same value as this cell
   useEffect(() => {
@@ -160,6 +177,7 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
   // highlight cell if there was a select event on a cell and it is related to this cell
   useEffect(() => {
     const token = PubSub.subscribe(BoardEvents.SELECT_CELL, (msg, data) => {
+      if (hidden) return;
       setSelected(isSameAddress(addr, data.addr));
       setHighlight1(isSameGrid(addr, data.addr) || isSameRow(addr, data.addr) || isSameColumn(addr, data.addr));
       setHighlight2(val !== -1 && val === data.val);
@@ -167,7 +185,7 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
     return () => {
       PubSub.unsubscribe(token);
     }
-  }, [selected, addr, val]);
+  }, [selected, addr, val, hidden]);
 
   function computeClasses(): string {
     let suffix = hasCollision ? "-wrong" : "-correct";
@@ -204,7 +222,7 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
       }}
       onKeyDown={processKeyDown}
     >
-      {val === -1 ? "" : val}
+      {val === -1 || hidden ? "" : val}
     </div>
   )
 }

@@ -11,7 +11,8 @@ export const TimerConstants = {
 export const TimerEvents = {
   START: 'start',
   PAUSE: 'pause',
-  END: 'end'
+  END: 'end',
+  RESUME: 'resume',
 } as const;
 
 export function Timer() {
@@ -44,13 +45,17 @@ export function Timer() {
         case TimerEvents.END:
           setRunning(false);
           break;
+        case TimerEvents.RESUME:
+          setStartTime(new Date().getTime() - elapsedMs);
+          setRunning(true);
+          break;
       }
     });
     
     return () => {
       PubSub.unsubscribe(token);
     }
-  }, [running]);
+  }, [running, elapsedMs]);
 
   useEffect(() => {
     let timerId: any;
