@@ -1,11 +1,18 @@
 
-export type Board = Array<Array<number>>;
+export type GenericBoard<T> = Array<Array<T>>;
+export type Board = GenericBoard<number>;
+export type BoardClues = GenericBoard<boolean>;
+export type BoardCollisions = GenericBoard<boolean>;
 export type Address = [number, number];
+export type Difficulty = "easy" | "moderate" | "hard";
+
 export const cellValues = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export const cellIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
-export const boardRows = [
-  [], [], [], [], [], [], [], []
-];
+export const DifficultyWeight = {
+  "easy": 50,
+  "moderate": 60,
+  "hard": 70,
+};
 
 const rowGroups = [
   [0, 1, 2],
@@ -69,7 +76,7 @@ export function rand(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-export function copyBoard(board: Readonly<Board>): Board {
+export function copyBoard<T>(board: Readonly<GenericBoard<T>>): GenericBoard<T> {
   return board.map((grid) => {
     return grid.map((val) => {
       return val;
@@ -112,8 +119,16 @@ export function isSameColumn(addr1: Address, addr2: Address) {
   return false;
 }
 
+function emptyGenericBoard(defVal: boolean | number) {
+  return cellIndices.map(() => new Array(9).fill(defVal));
+}
+
 export function createEmptyBoard(): Board {
-  return cellIndices.map(() => new Array(9).fill(-1));
+  return emptyGenericBoard(-1) as Board;
+}
+
+export function createEmptyCollisions(): BoardCollisions {
+  return emptyGenericBoard(false) as BoardCollisions;
 }
 
 export function valAt(b: Board, addr: Address): number {
@@ -203,11 +218,24 @@ export function checkColumn(t: Address, n: number, board: Board): boolean {
   return true;
 }
 
-export function fillBoard(): Board {
+export function fillBoard(d: Difficulty): Board {
   // type assertion to never return null.
   // assumption: brute force algo to always find a solution :)
-  let b = putNumOnGrid(0, 1, createEmptyBoard()) as Board; 
-  return pluckNumbers(3, b);
+  let b = putNumOnGrid(0, 1, createEmptyBoard()) as Board;
+  switch (d) {
+    case "moderate": return pluckNumbers(DifficultyWeight.moderate, b);
+    case "hard": return pluckNumbers(DifficultyWeight.hard, b);
+    case "easy": 
+    default: return pluckNumbers(DifficultyWeight.easy, b);
+  }
+}
+
+export function getBoardClues(board: Board): BoardClues {
+  return board.map((grid) => {
+    return grid.map((val) => {
+      return val !== -1;
+    });
+  });
 }
 
 function putNumOnGrid(gIdx: number, n: number, board: Board): Board | null {
@@ -240,9 +268,9 @@ function putNumOnGrid(gIdx: number, n: number, board: Board): Board | null {
   return updatedBoard;
 }
 
-export function fillGrid(gridIdx: number, board: Readonly<Board>): Board {
+export function fillGrid(gridIdx: number, board: Board): Board {
   const newGrid = getPermutation(cellValues);
-  const newBoard = copyBoard(board);
+  const newBoard = copyBoard<number>(board);
   newBoard[gridIdx] = newGrid;
   return newBoard;
 }

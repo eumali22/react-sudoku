@@ -1,34 +1,38 @@
 import React from 'react';
 import './App.css';
 import Board, { BoardEvents } from './Board';
-import { fillBoard, createEmptyBoard } from './engine';
 import PubSub from 'pubsub-js';
+import { Timer, TimerConstants, TimerEvents } from './Timer';
 
 function App() {
   return (
     <div className="App">
       <Board />
       <div className='btns'>
-        <button onClick={() => fillBoardAndUpdate()}>Fill Board</button>
-        <button onClick={() => clearBoard()}>Clear Board</button>
+        <Timer />
+        <button onClick={() => newGame("easy")}>New Easy Game</button>
+        <button onClick={() => newGame("moderate")}>New Moderate Game</button>
+        <button onClick={() => newGame("hard")}>New Hard Game</button>
+        <button onClick={() => pause()}>Pause Timer</button>
         <button onClick={() => checkWin()}>Check</button>
       </div>
     </div>
   );
 }
 
-function clearBoard() {
-  const b = createEmptyBoard();
-  PubSub.publish(BoardEvents.UPDATE_BOARD, b);
+function pause() {
+  PubSub.publish(TimerConstants.ACTION, TimerEvents.PAUSE);
 }
 
-function fillBoardAndUpdate() {
-  const b = fillBoard();
-  PubSub.publish(BoardEvents.UPDATE_BOARD, b);
+async function newGame(d: string) {
+  PubSub.publish(BoardEvents.NEW_GAME, {difficulty: d});
+  PubSub.publish(TimerConstants.ACTION, TimerEvents.END);
+  PubSub.publish(TimerConstants.ACTION, TimerEvents.START);
 }
 
 function checkWin() {
-  PubSub.publish(BoardEvents.CHECK_WIN);
+  console.log("unimplemented");
+  // PubSub.publish(BoardEvents.CHECK_WIN);
 }
 
 export default App;

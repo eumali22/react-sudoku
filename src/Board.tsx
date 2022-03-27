@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "./Board.css";
-import { Address, checkWinCondition, colMap, fillBoard, isSameAddress, isSameColumn, isSameGrid, isSameRow, rowMap } from "./engine";
+import { Address, checkConstraints, checkWinCondition, colMap, createEmptyCollisions, fillBoard, getBoardClues, isSameAddress, isSameColumn, isSameGrid, isSameRow, rowMap } from "./engine";
 import { copyBoard, createEmptyBoard } from "./engine";
 import PubSub from 'pubsub-js';
 
@@ -11,23 +11,39 @@ export const BoardEvents = {
   UPDATE_BOARD: "update.board",
   CHECK_WIN: "check.win",
   VICTORY: "victory",
+  NEW_GAME: "new.game"
 } as const;
 
 export function Board() {
-  const [board, setBoard] = useState(() => fillBoard());
+  const [board, setBoard] = useState(createEmptyBoard());
+  const [clues, setClues] = useState(getBoardClues(board));
+  const [collisions, setCollisions] = useState(createEmptyCollisions());
+  const [started, setStarted] = useState(false);
   const [solved, setSolved] = useState(false);
   
-  function handleKeyDown(data: { val: number, addr: Address }) {
+  function handleKeyDown({ val, addr }: {val: number, addr: Address}) {
     const newBoard = copyBoard(board);
-    newBoard[data.addr[0]][data.addr[1]] = data.val;
+    newBoard[addr[0]][addr[1]] = val;
     setBoard(newBoard);
+
+    const newCollisions = copyBoard(collisions);
+    if (val === -1 || !checkConstraints(addr, val, newBoard)) {
+      newCollisions[addr[0]][addr[1]] = (val !== -1);
+    } else {
+      newCollisions[addr[0]][addr[1]] = false;
+    }
+    setCollisions(newCollisions);
+
     if (checkWinCondition(newBoard)) {
       setSolved(true);
     }
   }
 
   useEffect(() => {
-    if (solved) setTimeout(() => alert("VICTORY!"), 200);
+    if (solved) {
+      PubSub.publish(BoardEvents.VICTORY);
+      setTimeout(() => alert("VICTORY!"), 200);
+    }
   }, [solved]);
 
   // Listen to board update request event
@@ -40,10 +56,35 @@ export function Board() {
     }
   });
 
+  // Listen to new game request
+  useEffect(() => {
+    const token = PubSub.subscribe(BoardEvents.NEW_GAME, (msg, {difficulty}) => {
+      const newBoard = fillBoard(difficulty);
+      const newClues = getBoardClues(newBoard);
+
+      setSolved(false);
+      setBoard(newBoard);
+      setClues(newClues);
+      setStarted(true);
+    });
+    return () => {
+      PubSub.unsubscribe(token);
+    }
+  });
+
   return (
     <div className="board">
       {board.map((val, idx) => {
-        return <Grid key={idx} gridIdx={idx} values={val} handleKeyDown={handleKeyDown} />
+        return <Grid
+          key={idx}
+          gridIdx={idx}
+          values={val}
+          handleKeyDown={handleKeyDown}
+          gameStarted={started}
+          gameSolved={solved}
+          clues={clues[idx]}
+          collisions={collisions[idx]}
+        />
       })}
     </div>
   );
@@ -52,39 +93,54 @@ export function Board() {
 type GridProps = {
   gridIdx: number,
   values: Array<number>,
-  handleKeyDown: (data: { val: number, addr: Address }) => void
+  handleKeyDown: (data: { val: number, addr: Address }) => void,
+  gameStarted: boolean,
+  gameSolved: boolean,
+  clues: Array<boolean>,
+  collisions: Array<boolean>
 }
 
-function Grid(props: GridProps) {
-    const { gridIdx, values } = props;
+function Grid({ gridIdx, values, handleKeyDown, clues, collisions }: GridProps) {
     const comps = values.map((val, idx) => {
         return <Cell
           key={idx}
           addr={[gridIdx, idx]}
           val={val}
-          handleKeyDown={props.handleKeyDown}
+          handleKeyDown={handleKeyDown}
+          isClue={clues[idx]}
+          hasCollision={collisions[idx]}
         />
     });
     return (
-        <div className={"grid " + (gridIdx % 2 === 0 ? "bg2":"bg1")}>{comps}</div>
+        <div className={"grid "}>{comps}</div>
     );
 }
+
+
+const borderTop: Address[] = [...rowMap[3], ...rowMap[6]];
+const borderBottom: Address[] = [...rowMap[2], ...rowMap[5]];
+const borderRight: Address[] = [...colMap[2], ...colMap[5]];
+const borderLeft: Address[] = [...colMap[3], ...colMap[6]];
 
 type CellProps = {
   addr: Address,
   val: number,
-  handleKeyDown: (data: { val: number, addr: Address }) => void
+  handleKeyDown: (data: { val: number, addr: Address }) => void,
+  isClue: boolean,
+  hasCollision: boolean
 }
 
-function Cell({addr, val, handleKeyDown}: CellProps) {
+function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
   const [selected, setSelected] = useState(false);
   const [highlight1, setHighlight1] = useState(false);
   const [highlight2, setHighlight2] = useState(false);
 
   const processKeyDown = (e: any) => {
+    if (isClue) return;
     let k = parseInt(e.key);
     k = (e.keyCode === 46) ? -1 : k;
-    
+    if (val === k) return;
+
     if ((k >= 1 && k <= 9) || k === -1) {
       PubSub.publish(BoardEvents.TYPEIN_CELL, { val: k, addr: addr });
       handleKeyDown({ val: k, addr: addr });
@@ -113,10 +169,36 @@ function Cell({addr, val, handleKeyDown}: CellProps) {
     }
   }, [selected, addr, val]);
 
+  function computeClasses(): string {
+    let suffix = hasCollision ? "-wrong" : "-correct";
+    let classes = "cell";
+    classes += (!isClue ? " editable" + suffix : "");
+    classes += (selected && !isClue ? " sel" + suffix : "");
+    classes += (highlight1 ? " hlight1" : "");
+    classes += (highlight2 ? " hlight2" : "");
+    classes += getBorders();
+    return classes;
+  }
+
+  function getBorders() {
+    let bClasses = "";
+    bClasses += computeBorderClass(addr, "bdr-t", borderTop);
+    bClasses += computeBorderClass(addr, "bdr-b", borderBottom);
+    bClasses += computeBorderClass(addr, "bdr-r", borderRight);
+    bClasses += computeBorderClass(addr, "bdr-l", borderLeft);
+    return bClasses;
+  }
+
+  function computeBorderClass(addr: Address, c: string, arrAddr: Address[]): string {
+    return arrAddr.reduce((pStr, cAddr) => {
+      return pStr + (isSameAddress(cAddr, addr) ? (" " + c) : "");
+    }, "");
+  }
+
   return (
     <div
       tabIndex={-1}
-      className={"cell" + (selected ? " sel" : "") + (highlight1 ? " hlight1" : "") + (highlight2 ? " hlight2" : "") + getBorders(addr)}
+      className={computeClasses()}
       onClick={() => {
         PubSub.publish(BoardEvents.SELECT_CELL, { addr: addr, val: val});
       }}
@@ -127,24 +209,7 @@ function Cell({addr, val, handleKeyDown}: CellProps) {
   )
 }
 
-const borderTop: Address[] = [...rowMap[3], ...rowMap[6]];
-const borderBottom: Address[] = [...rowMap[2], ...rowMap[5]];
-const borderRight: Address[] = [...colMap[2], ...colMap[5]];
-const borderLeft: Address[] = [...colMap[3], ...colMap[6]];
 
-function getBorders(addr: Address) {
-  let bClasses = "";
-  bClasses += computeBorderClass(addr, "bdr-t", borderTop);
-  bClasses += computeBorderClass(addr, "bdr-b", borderBottom);
-  bClasses += computeBorderClass(addr, "bdr-r", borderRight);
-  bClasses += computeBorderClass(addr, "bdr-l", borderLeft);
-  return bClasses;
-}
 
-function computeBorderClass(addr: Address, c: string, arrAddr: Address[]): string {
-  return arrAddr.reduce((pStr, cAddr) => {
-    return pStr + (isSameAddress(cAddr, addr) ? (" " + c) : "");
-  }, "");
-}
 
 export default Board;
