@@ -3,13 +3,12 @@
     --border-default: 2px solid rgb(156, 156, 156);
     --border-selected: 2px solid black;
     --border-radius-default: 5px;
-    /* --bgc1: rgb(14, 15, 87);
-    --bgc2: rgb(21, 23, 134); */
-    --bgc1: white;
     --text-color1: black;
     --text-color2: rgb(29, 29, 29);
     --highlight1: rgb(223, 223, 223);
     --highlight2: rgb(190, 190, 190);
+    --cell-correct: blue;
+    --cell-wrong: red;
 }
 
 * {
@@ -39,14 +38,6 @@
     height: calc(var(--cell-length) * 3);
 }
 
-.bg1 {
-    background-color: var(--bgc1);
-}
-
-.bg2 {
-    background-color: var(--bgc1);
-}
-
 .cell {
   width: var(--cell-length);
   min-height: var(--cell-length);
@@ -57,19 +48,31 @@
   border-radius: 0px;
 }
 
-.sel {
-  background-color: rgb(66, 51, 153) !important;
+.editable-correct {
+  color: var(--cell-correct);
+}
+
+.editable-wrong {
+  color: var(--cell-wrong);
+}
+
+.sel-correct {
+  background-color: var(--cell-correct) !important;
+  color: white !important;
+  border: var(--border-selected);
+}
+
+.sel-wrong {
+  background-color: var(--cell-wrong) !important;
   color: white !important;
   border: var(--border-selected);
 }
 
 .hlight1 {
-  color: var(--text-color1);
   background-color: var(--highlight1);
 }
 
 .hlight2 {
-  color: var(--text-color1);
   background-color: var(--highlight2);
 }
 

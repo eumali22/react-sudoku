@@ -1,34 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import Board, { BoardEvents } from './Board';
-import { fillBoard, createEmptyBoard } from './engine';
 import PubSub from 'pubsub-js';
+import { Timer, TimerConstants, TimerEvents } from './Timer';
 
 function App() {
+  const [paused, setPaused] = useState(false);
+
+  function pause() {
+    PubSub.publish(TimerConstants.ACTION, paused ? TimerEvents.RESUME : TimerEvents.PAUSE);
+    PubSub.publish(BoardEvents.TOGGLE_BOARD_DISPLAY);
+    setPaused(!paused);
+  }
+
   return (
     <div className="App">
       <Board />
       <div className='btns'>
-        <button onClick={() => fillBoardAndUpdate()}>Fill Board</button>
-        <button onClick={() => clearBoard()}>Clear Board</button>
-        <button onClick={() => checkWin()}>Check</button>
+        <Timer />
+        <button onClick={() => newGame("easy")}>New Easy Game</button>
+        <button onClick={() => newGame("moderate")}>New Moderate Game</button>
+        <button onClick={() => newGame("hard")}>New Hard Game</button>
+        <button onClick={pause}>Pause/Resume Timer</button>
       </div>
     </div>
   );
 }
 
-function clearBoard() {
-  const b = createEmptyBoard();
-  PubSub.publish(BoardEvents.UPDATE_BOARD, b);
+function newGame(d: string) {
+  PubSub.publish(BoardEvents.NEW_GAME, {difficulty: d});
+  PubSub.publish(TimerConstants.ACTION, TimerEvents.END);
+  PubSub.publish(TimerConstants.ACTION, TimerEvents.START);
 }
 
-function fillBoardAndUpdate() {
-  const b = fillBoard();
-  PubSub.publish(BoardEvents.UPDATE_BOARD, b);
-}
-
-function checkWin() {
-  PubSub.publish(BoardEvents.CHECK_WIN);
-}
 
 export default App;
