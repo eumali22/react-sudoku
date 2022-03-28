@@ -27,7 +27,7 @@ function App() {
   );
 }
 
-async function newGame(d: string) {
+function newGame(d: string) {
   PubSub.publish(BoardEvents.NEW_GAME, {difficulty: d});
   PubSub.publish(TimerConstants.ACTION, TimerEvents.END);
   PubSub.publish(TimerConstants.ACTION, TimerEvents.START);
