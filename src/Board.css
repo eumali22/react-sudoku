@@ -91,3 +91,39 @@
 .bdr-l {
   border-left-color: black !important;
 }
+
+.pulse-start {
+  background-color: var(--highlight1) !important;
+  /* transition: all .4s ease; */
+}
+
+.pulse-peak {
+  background-color: rgb(255, 255, 209) !important;
+  transition: all .2s ease;
+}
+
+.pulse-end {
+  background-color: var(--highlight1) !important;
+  transition: all .4s ease;
+}
+
+.cell-victory {
+  animation: animate-cell infinite 5s linear;
+  border: var(--border-default);
+}
+
+@keyframes animate-cell {
+  from {
+    background-color: white;
+    color: black;
+  }
+
+  50% {
+    background-color: rgb(238, 238, 181);
+  }
+
+  to {
+    background-color: white;
+    color: black;
+  }
+}

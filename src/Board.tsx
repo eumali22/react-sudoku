@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./Board.css";
-import { Address, checkConstraints, checkWinCondition, colMap, createEmptyCollisions, fillBoard, getBoardClues, isSameAddress, isSameColumn, isSameGrid, isSameRow, rowMap } from "./engine";
+import { Address, addressIsMember, checkComplete, checkConstraints, checkGrid, checkWinCondition, colMap, createEmptyCollisions, fillBoard, getBoardClues, getColumnAddrs, getRowAddrs, isSameAddress, isSameColumn, isSameGrid, isSameRow, rowMap, valAt } from "./engine";
 import { copyBoard, createEmptyBoard } from "./engine";
 import PubSub from 'pubsub-js';
 
@@ -12,17 +12,18 @@ export const BoardEvents = {
   CHECK_WIN: "check.win",
   VICTORY: "victory",
   NEW_GAME: "new.game",
-  TOGGLE_BOARD_DISPLAY: "toggle.board"
+  TOGGLE_BOARD_DISPLAY: "toggle.board",
+  GROUP_COMPLETED: "group.completed",
 } as const;
 
 export function Board() {
   const [board, setBoard] = useState(createEmptyBoard());
   const [clues, setClues] = useState(getBoardClues(board));
   const [collisions, setCollisions] = useState(createEmptyCollisions());
-  const [started, setStarted] = useState(false);
   const [solved, setSolved] = useState(false);
   
   function handleKeyDown({ val, addr }: {val: number, addr: Address}) {
+    if (solved) { return; }
     const newBoard = copyBoard(board);
     newBoard[addr[0]][addr[1]] = val;
     setBoard(newBoard);
@@ -37,36 +38,56 @@ export function Board() {
 
     if (checkWinCondition(newBoard)) {
       setSolved(true);
+    } else {
+      if (checkComplete(newBoard[addr[0]])) {
+        const gridAddrs = newBoard[addr[0]].map((v, i) => [addr[0], i]);
+        PubSub.publish(BoardEvents.GROUP_COMPLETED, gridAddrs);
+      }
+
+      const rowAddrs = getRowAddrs(addr);
+      const rowVals = rowAddrs.map((v) => valAt(newBoard, v));
+      if (checkComplete(rowVals)) {
+        PubSub.publish(BoardEvents.GROUP_COMPLETED, rowAddrs);
+      }
+
+      const colAddrs = getColumnAddrs(addr);
+      const colVals = colAddrs.map((v) => valAt(newBoard, v));
+      if (checkComplete(colVals)) {
+        PubSub.publish(BoardEvents.GROUP_COMPLETED, colAddrs);
+      }
     }
   }
 
   useEffect(() => {
     if (solved) {
       PubSub.publish(BoardEvents.VICTORY);
-      setTimeout(() => alert("VICTORY!"), 200);
+      // setTimeout(() => alert("VICTORY!"), 200);
     }
   }, [solved]);
 
   // Listen to board update request event
   useEffect(() => {
+    console.log('listening to board update request.');
+    
     const token = PubSub.subscribe(BoardEvents.UPDATE_BOARD, (msg, newBoard) => {
       setBoard(newBoard);
     });
     return () => {
       PubSub.unsubscribe(token);
     }
-  });
+  }, [board]);
 
   // Listen to new game request
   useEffect(() => {
+    console.log('listening to new game request.');
     const token = PubSub.subscribe(BoardEvents.NEW_GAME, (msg, {difficulty}) => {
       const newBoard = fillBoard(difficulty);
       const newClues = getBoardClues(newBoard);
-
+      const newCollisions = createEmptyCollisions();
       setSolved(false);
       setBoard(newBoard);
       setClues(newClues);
-      setStarted(true);
+      setCollisions(newCollisions);
     });
     return () => {
       PubSub.unsubscribe(token);
@@ -81,8 +102,6 @@ export function Board() {
           gridIdx={idx}
           values={val}
           handleKeyDown={handleKeyDown}
-          gameStarted={started}
-          gameSolved={solved}
           clues={clues[idx]}
           collisions={collisions[idx]}
         />
@@ -95,8 +114,6 @@ type GridProps = {
   gridIdx: number,
   values: Array<number>,
   handleKeyDown: (data: { val: number, addr: Address }) => void,
-  gameStarted: boolean,
-  gameSolved: boolean,
   clues: Array<boolean>,
   collisions: Array<boolean>
 }
@@ -136,6 +153,7 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
   const [highlight1, setHighlight1] = useState(false);
   const [highlight2, setHighlight2] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [animation, setAnimation] = useState("");
 
   const processKeyDown = (e: any) => {
     if (isClue || hidden) return;
@@ -148,6 +166,72 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
       handleKeyDown({ val: k, addr: addr });
     }
   }
+
+  // listen for new game. clear animation
+  useEffect(() => {
+    console.log('new game listen');
+    
+    const token = PubSub.subscribe(BoardEvents.NEW_GAME, () => {
+      setAnimation('');
+      console.log('set animation to blank');
+      
+    });
+    return () => {
+      PubSub.unsubscribe(token);
+    }
+  }, [val, isClue, hasCollision]);
+
+  // listen for victory. start win animation
+  useEffect(() => {
+    const token = PubSub.subscribe(BoardEvents.VICTORY, () => {
+      setAnimation('victory');
+    });
+    return () => {
+      PubSub.unsubscribe(token);
+    }
+  }, [animation]);
+
+  // listen to group completions (row, grid, column)
+  useEffect(() => {
+    const token = PubSub.subscribe(BoardEvents.GROUP_COMPLETED, (msg, addrs) => {
+      if (addressIsMember(addr, addrs)) {
+        setAnimation('pulse-start');
+      }
+    });
+    return () => {
+      PubSub.unsubscribe(token);
+    }
+  });
+
+  // synchronize animation states
+  useEffect(() => {
+    let a: string;
+    let ms;
+    switch (animation) {
+      case 'pulse-start':
+        a = "pulse-peak";
+        ms = 100;
+        break;
+      case 'pulse-peak':
+        a = "pulse-end";
+        ms = 200;
+        break;
+      case 'pulse-end':
+        a = "";
+        ms = 400;
+        break;
+      default:
+        a = "";
+        ms = 0;
+    }
+
+    if (ms !== 0) {
+      setTimeout(() => {
+        setAnimation(a);
+      }, ms);
+    }
+
+  }, [animation]);
 
   // toggle shown / hidden contents.
   useEffect(() => {
@@ -189,12 +273,17 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
 
   function computeClasses(): string {
     let suffix = hasCollision ? "-wrong" : "-correct";
-    let classes = "cell";
+    let classes = "cell" + getBorders();
+
+    if (animation === "victory") {
+      return classes + " cell-victory";
+    }
+
     classes += (!isClue ? " editable" + suffix : "");
-    classes += (selected && !isClue ? " sel" + suffix : "");
-    classes += (highlight1 ? " hlight1" : "");
-    classes += (highlight2 ? " hlight2" : "");
-    classes += getBorders();
+    classes += (selected && !isClue && (animation === "") ? " sel" + suffix : "");
+    classes += (highlight1 && (animation === "") ? " hlight1" : "");
+    classes += (highlight2 && (animation === "") ? " hlight2" : "");
+    classes += " " + animation;
     return classes;
   }
 

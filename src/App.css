@@ -41,7 +41,8 @@
 
 /*****/
 
-.btns {margin-left: 10px;
+.controls {
+  margin-left: 10px;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
@@ -49,7 +50,7 @@
   width: 200px;
 }
 
-.btns button {
+.controls button {
   /*flex: 40px;*/
   box-sizing: border-box;
   font-size: small;

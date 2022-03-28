@@ -1,0 +1,19 @@
+.default-cell {
+  width: 200px;
+  padding: 10px;
+}
+
+.pulse-start {
+  background-color: white;
+  /* transition: all .4s ease; */
+}
+
+.pulse-peak {
+  background-color: rgb(255, 255, 209);
+  transition: all .2s ease;
+}
+
+.pulse-end {
+  background-color: white;
+  transition: all .4s ease;
+}

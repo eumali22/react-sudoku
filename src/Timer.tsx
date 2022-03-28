@@ -28,7 +28,7 @@ export function Timer() {
     return () => {
       PubSub.unsubscribe(token);
     }
-  });
+  }, [running]);
 
   // listen to new game requests
   useEffect(() => {
