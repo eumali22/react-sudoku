@@ -9,9 +9,9 @@ export type Difficulty = "easy" | "moderate" | "hard";
 export const cellValues = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export const cellIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 export const DifficultyWeight = {
-  "easy": 2,
+  "easy": 2, // 36,
   "moderate": 45,
-  "hard": 55,
+  "hard": 54,
 };
 
 const rowGroups = [

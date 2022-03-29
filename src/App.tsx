@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import Board, { BoardEvents } from './Board';
 import PubSub from 'pubsub-js';
@@ -8,6 +8,16 @@ import Banner from './Banner';
 
 function App() {
   const [paused, setPaused] = useState(false);
+  
+  // for animation
+  const [loaded, setLoaded] = useState(false);
+
+  // run once when render finished.
+  useEffect(() => {
+    setTimeout(() => {
+      setLoaded(true);
+    }, 200);
+  }, []);
 
   function togglePause() {
     PubSub.publish(TimerConstants.ACTION, paused ? TimerEvents.RESUME : TimerEvents.PAUSE);
@@ -25,7 +35,7 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <div className={"App" + (loaded ? "" : " App-pre") }>
       <Board />
       <div className='controls'>
         <Banner />

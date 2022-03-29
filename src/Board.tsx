@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./Board.css";
-import { Address, addressIsMember, checkComplete, checkConstraints, checkGrid, checkWinCondition, colMap, createEmptyCollisions, fillBoard, getBoardClues, getColumnAddrs, getRowAddrs, isSameAddress, isSameColumn, isSameGrid, isSameRow, rowMap, valAt } from "./engine";
+import { Address, addressIsMember, checkComplete, checkConstraints, checkGrid, checkWinCondition, colMap, createEmptyCollisions, fillBoard, getBoardClues, getColumnAddrs, getRowAddrs, isSameAddress, isSameColumn, isSameGrid, isSameRow, rand, rowMap, valAt } from "./engine";
 import { copyBoard, createEmptyBoard } from "./engine";
 import PubSub from 'pubsub-js';
 
@@ -95,7 +95,7 @@ export function Board() {
   });
 
   return (
-    <div className="board">
+    <div className={"board"}>
       {board.map((val, idx) => {
         return <Grid
           key={idx}
@@ -169,12 +169,8 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
 
   // listen for new game. clear animation
   useEffect(() => {
-    console.log('new game listen');
-    
     const token = PubSub.subscribe(BoardEvents.NEW_GAME, () => {
       setAnimation('');
-      console.log('set animation to blank');
-      
     });
     return () => {
       PubSub.unsubscribe(token);
@@ -184,7 +180,15 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
   // listen for victory. start win animation
   useEffect(() => {
     const token = PubSub.subscribe(BoardEvents.VICTORY, () => {
-      setAnimation('victory');
+      if (addr[1] % 4 === 0) {
+        setTimeout(() => { setAnimation('victory') }, (addr[0] + addr[1]) * 50 * rand(1, 2));
+      } else if (addr[1] % 4 === 1) { 
+        setTimeout(() => { setAnimation('victory-alt1') }, (addr[0] + addr[1]) * 50 * rand(1, 2));
+      } else if (addr[1] % 4 === 2) {
+        setTimeout(() => { setAnimation('victory-alt2') }, (addr[0] + addr[1]) * 50 * rand(1, 2));
+      } else if (addr[1] % 4 === 3) {
+        setTimeout(() => { setAnimation('victory-alt3') }, (addr[0] + addr[1]) * 50 * rand(1, 2));
+      }
     });
     return () => {
       PubSub.unsubscribe(token);
@@ -275,8 +279,8 @@ function Cell({addr, val, handleKeyDown, isClue, hasCollision}: CellProps) {
     let suffix = hasCollision ? "-wrong" : "-correct";
     let classes = "cell" + getBorders();
 
-    if (animation === "victory") {
-      return classes + " cell-victory";
+    if (animation.startsWith("victory")) {
+      return classes + " cell-" + animation;
     }
 
     classes += (!isClue ? " editable" + suffix : "");
