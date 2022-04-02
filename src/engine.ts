@@ -9,9 +9,9 @@ export type Difficulty = "easy" | "moderate" | "hard";
 export const cellValues = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export const cellIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 export const DifficultyWeight = {
-  "easy": 40,
+  "easy": 2, // 36,
   "moderate": 45,
-  "hard": 55,
+  "hard": 54,
 };
 
 const rowGroups = [
@@ -82,6 +82,24 @@ export function copyBoard<T>(board: Readonly<GenericBoard<T>>): GenericBoard<T> 
       return val;
     });
   });
+}
+
+export function getRowAddrs(addr: Address): Array<Address> {
+  for (const row of rowMap) {
+    for (const a of row) {
+      if (isSameAddress(addr, a)) return row;
+    }
+  }
+  throw new Error("invalid address.");
+}
+
+export function getColumnAddrs(addr: Address): Array<Address> {
+  for (const col of colMap) {
+    for (const a of col) {
+      if (isSameAddress(addr, a)) return col;
+    }
+  }
+  throw new Error("invalid address.");
 }
 
 export function addressIsMember(addr: Address, addrArr: Address[]) {
@@ -215,7 +233,12 @@ export function checkColumn(t: Address, n: number, board: Board): boolean {
     }
   }
 
+  // test comment
   return true;
+}
+
+export function checkComplete(arr: number[]): boolean {
+  return (arr.reduce((p, c) => p + c) === 45);
 }
 
 export function fillBoard(d: Difficulty): Board {

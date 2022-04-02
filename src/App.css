@@ -1,7 +1,16 @@
+.App-pre {
+  top: -10px !important;
+  opacity: 0 !important;
+}
+
 .App {
-    display: flex;
-    justify-content: center;
-    padding: 40px;
+  position: relative;
+  opacity: 1;
+  top: 0px;
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+  transition: all 0.5s ease-out;
 }
 
 .App-logo {
@@ -41,7 +50,8 @@
 
 /*****/
 
-.btns {margin-left: 10px;
+.controls {
+  margin-left: 10px;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
@@ -49,7 +59,7 @@
   width: 200px;
 }
 
-.btns button {
+.controls button {
   /*flex: 40px;*/
   box-sizing: border-box;
   font-size: small;

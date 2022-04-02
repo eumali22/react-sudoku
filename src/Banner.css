@@ -1,0 +1,36 @@
+h1 {
+  font-size: 2.4em;
+  height: 50px;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  margin: 5px;
+  padding: 2px;
+}
+
+h1.banner-victory {
+  font-size: 2.4em;
+  color: red;
+  transition: all .2s linear;
+  animation: animate-banner infinite 2s linear;
+}
+
+h1.banner-victory-alt {
+  font-size: 2.3em;
+  color: black;
+  transition: all .2s linear;
+  
+}
+
+@keyframes animate-banner {
+  from {
+    transform: skew(0);
+  }
+  25% {
+    transform: skew(2deg, 2deg);
+  }
+  75% {
+    transform: skew(-2deg, -2deg);
+  }
+  to {
+    transform: skew(0);
+  }
+}

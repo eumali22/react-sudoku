@@ -1,6 +1,6 @@
 :root {
     --cell-length: 40px;
-    --border-default: 2px solid rgb(177, 171, 154);
+    --border-default: 2px solid rgb(134, 134, 134);
     --border-selected: 2px solid rgb(44, 26, 26);
     --border-radius-default: 5px;
     --text-color1: black;
@@ -16,18 +16,19 @@
 }
 
 .board {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: calc((var(--cell-length) * 9) + 4px);
-    height: calc((var(--cell-length) * 9) + 4px);
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    border: var(--border-default);
-    color: var(--text-color2);
-    font-weight: normal;
-    font-family: Arial;
-    font-size: 1.4em;
-    border-radius: var(--border-radius-default);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: calc((var(--cell-length) * 9) + 4px);
+  min-width: calc((var(--cell-length) * 9) + 4px);
+  height: calc((var(--cell-length) * 9) + 4px);
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  border: var(--border-default);
+  color: var(--text-color2);
+  font-weight: normal;
+  font-family: Arial;
+  font-size: 1.4em;
+  border-radius: var(--border-radius-default);
 }
 
 .grid {
@@ -90,4 +91,55 @@
 
 .bdr-l {
   border-left-color: black !important;
+}
+
+.pulse-start {
+  background-color: var(--highlight1) !important;
+  /* transition: all .4s ease; */
+}
+
+.pulse-peak {
+  background-color: rgb(255, 255, 209) !important;
+  transition: all .2s ease;
+}
+
+.pulse-end {
+  background-color: var(--highlight1) !important;
+  transition: all .4s ease;
+}
+
+.cell-victory {
+  animation: animate-cell infinite 8s linear;
+  border: var(--border-default);
+}
+
+.cell-victory-alt1 {
+  animation: animate-cell infinite 6s linear;
+  border: var(--border-default);
+}
+
+.cell-victory-alt2 {
+  animation: animate-cell infinite 4s linear;
+  border: var(--border-default);
+}
+
+.cell-victory-alt3 {
+  animation: animate-cell infinite 2s linear;
+  border: var(--border-default);
+}
+
+@keyframes animate-cell {
+  from {
+    background-color: white;
+    color: black;
+  }
+
+  50% {
+    background-color: var(--highlight2);
+  }
+
+  to {
+    background-color: white;
+    color: black;
+  }
 }
