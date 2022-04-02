@@ -5,10 +5,10 @@ import PubSub from 'pubsub-js';
 import { Timer, TimerConstants, TimerEvents } from './Timer';
 import Banner from './Banner';
 
-
 function App() {
   const [paused, setPaused] = useState(false);
-  
+  const [pauseDisabled, setPauseDisabled] = useState(false);
+
   // for animation
   const [loaded, setLoaded] = useState(false);
 
@@ -18,6 +18,16 @@ function App() {
       setLoaded(true);
     }, 200);
   }, []);
+
+  // listen to victory event and disable pause button
+  useEffect(() => {
+    const token = PubSub.subscribe(BoardEvents.VICTORY, () => {
+      setPauseDisabled(true);
+    });
+    return () => {
+      PubSub.unsubscribe(token);
+    }
+  });
 
   function togglePause() {
     PubSub.publish(TimerConstants.ACTION, paused ? TimerEvents.RESUME : TimerEvents.PAUSE);
@@ -29,6 +39,7 @@ function App() {
     if (paused) {
       togglePause();
     }
+    setPauseDisabled(false);
     PubSub.publish(BoardEvents.NEW_GAME, { difficulty: d });
     PubSub.publish(TimerConstants.ACTION, TimerEvents.END);
     PubSub.publish(TimerConstants.ACTION, TimerEvents.START);
@@ -43,7 +54,7 @@ function App() {
         <button onClick={() => newGame("easy")}>New Easy Game</button>
         <button onClick={() => newGame("moderate")}>New Moderate Game</button>
         <button onClick={() => newGame("hard")}>New Hard Game</button>
-        <button onClick={togglePause}>Pause/Resume Timer</button>
+        <button disabled={pauseDisabled} onClick={togglePause}>Pause/Resume Timer</button>
       </div>
     </div>
   );
