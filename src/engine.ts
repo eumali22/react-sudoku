@@ -9,7 +9,7 @@ export type Difficulty = "easy" | "moderate" | "hard";
 export const cellValues = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export const cellIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 export const DifficultyWeight = {
-  "easy": 36,
+  "easy": 3,
   "moderate": 45,
   "hard": 54,
 };

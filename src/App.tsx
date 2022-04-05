@@ -12,7 +12,7 @@ function App() {
   // for animation
   const [loaded, setLoaded] = useState(false);
 
-  // run once when render finished.
+  // run once when initial render is finished.
   useEffect(() => {
     setTimeout(() => {
       setLoaded(true);
