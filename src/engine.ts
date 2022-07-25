@@ -1,4 +1,3 @@
-
 export type GenericBoard<T> = Array<Array<T>>;
 export type Board = GenericBoard<number>;
 export type BoardClues = GenericBoard<boolean>;
@@ -9,7 +8,7 @@ export type Difficulty = "easy" | "moderate" | "hard";
 export const cellValues = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 export const cellIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 export const DifficultyWeight = {
-  "easy": 3,
+  "easy": 15,
   "moderate": 45,
   "hard": 54,
 };
@@ -165,7 +164,7 @@ export function checkWinCondition(b: Board): boolean {
     .map((row) => row.reduce((p, c) => p + c) === 45)
     .reduce((p, c) => p && c);
 
-  // check rows
+  // check columns
   const validColumns = colMap
     .map((addrArr) => addrArr.map((addr) => valAt(b, addr)))
     .map((col) => col.reduce((p, c) => p + c) === 45)
@@ -211,6 +210,7 @@ export function checkRow(t: Address, n: number, board: Board): boolean {
       }
     }
   }
+
   return true;
 }
 
@@ -233,7 +233,6 @@ export function checkColumn(t: Address, n: number, board: Board): boolean {
     }
   }
 
-  // test comment
   return true;
 }
 
@@ -308,8 +307,6 @@ export function pluckNumbers(count: number, board: Readonly<Board>) {
 
   return b;
 }
-
-
 
 export async function wait(ms: number) {
   return new Promise(resolve => {
